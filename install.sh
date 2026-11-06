@@ -56,6 +56,17 @@ if ! dpkg -l | grep -q avahi-daemon; then
   log "Menginstal avahi-daemon..."
   apt update && apt install -y avahi-daemon
 fi
+# Instalasi Paket Utama (Avahi, Apache, Node.js, npm)
+log "Memperbarui repositori dan menginstal paket yang diperlukan..."
+apt update && apt install -y nodejs npm
+
+# Instal PM2 secara global
+if ! command -v pm2 &> /dev/null; then
+  log "Menginstal PM2 process manager..."
+  npm install -g pm2
+else
+  log "PM2 sudah terinstal."
+fi
 
 # Konfigurasi Avahi agar mendengarkan interface terpilih
 CONFIG_FILE="/etc/avahi/avahi-daemon.conf"

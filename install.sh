@@ -113,12 +113,13 @@ setup_directory() {
     local dir="$1"
     local name="$2"
     local repo_url="$3"
+    local is_frontend="$4"
     
     if [[ -d "$dir" ]]; then
         log "Direktori $name ($dir) sudah ada."
         read -rp "Apakah Anda ingin memperbarui/menimpa isinya? (y/N): " choice
         if [[ "$choice" =~ ^[Yy]$ ]]; then
-            log "Membersihkan dan melakukan clone ulang untuk $name dari $repo_url..."
+            log "Membersihkan dan melakukan clone ulang untuk $name..."
             rm -rf "$dir"
             git clone "$repo_url" "$dir"
         else
@@ -130,11 +131,20 @@ setup_directory() {
         chown -R root:root "$dir"
         chmod 755 "$dir"
     fi
+
+    # Jika ini adalah direktori frontend, lakukan npm install dan npm run build
+    if [[ "$is_frontend" == "true" && -d "$dir" ]]; then
+        log "Menjalankan npm install & build untuk Frontend..."
+        cd "$dir"
+        npm install
+        npm run build
+        cd - > /dev/null
+    fi
 }
 
-# Panggil fungsi dengan menyertakan URL Repository masing-masing
-setup_directory "$FE_DIR" "Frontend (lwi-fe)" "https://github.com/linux-web-interface/frontend.git"
-setup_directory "$BE_DIR" "Backend (lwi-be)" "https://github.com/linux-web-interface/backend.git"
+# Panggil fungsi dengan parameter tambahan "true" untuk frontend
+setup_directory "$FE_DIR" "Frontend (lwi-fe)" "https://github.com/linux-web-interface/frontend.git" "true"
+setup_directory "$BE_DIR" "Backend (lwi-be)" "https://github.com/linux-web-interface/backend.git" "false"
 
 # 2. Eksekusi Check Network (mengambil dari folder scripts/)
 log "Menjalankan pemeriksaan jaringan (Check Network)..."
@@ -164,5 +174,14 @@ log "Mengonfigurasi UFW firewall..."
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable
+
+log "Menjalankan skrip start-all.sh untuk mengaktifkan semua layanan..."
+if [[ -f "./scripts/start-all.sh" ]]; then
+    bash ./scripts/start-all.sh
+elif [[ -f "./start-all.sh" ]]; then
+    bash ./start-all.sh
+else
+    log "Peringatan: File start-all.sh tidak ditemukan. Layanan belum dinyalakan otomatis."
+fi
 
 log "Instalasi selesai! Silakan akses dari browser Windows melalui: http://$NEW_HOSTNAME.local"

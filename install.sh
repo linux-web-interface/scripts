@@ -202,16 +202,11 @@ else
 fi
 
 # 3. Setup Apache (Cek apakah sudah dikonfigurasi)
-log "Memeriksa konfigurasi Apache..."
-if [[ -f "$SITE_FILE" ]]; then
-    echo "VM sudah terkonfigurasi apachenya."
+
+if [[ -f "./scripts/setup-apache.sh" ]]; then
+    sudo env APP_NAME="$APP_NAME" DOCROOT="$FE_DIR" bash ./scripts/setup-apache.sh
 else
-    log "Konfigurasi Apache belum ada. Menyiapkan Apache..."
-    if [[ -f "./scripts/setup-apache.sh" ]]; then
-        sudo env APP_NAME="$APP_NAME" DOCROOT="$FE_DIR" bash ./scripts/setup-apache.sh
-    else
-        err "File setup-apache.sh tidak ditemukan di dalam folder scripts/!"
-    fi
+    err "File setup-apache.sh tidak ditemukan di dalam folder scripts/!"
 fi
 
 # 4. Pengaturan Firewall (UFW) untuk akses web

@@ -9,7 +9,7 @@ Paket ini menyiapkan lapisan web dan membantu pemeriksaan jaringan untuk proyek 
 Untuk memulai penyiapan infrastruktur dan server web secara otomatis, jalankan perintah berikut di terminal Linux VM Anda:
 
 ```bash
-rm -rf ./scripts && cd / && git clone https://github.com/linux-web-interface/scripts.git && chmod +x scripts/*.sh && cd ./scripts && ./install.sh
+rm -rf /scripts && cd / && git clone https://github.com/linux-web-interface/scripts.git && chmod +x scripts/*.sh && cd ./scripts && ./install.sh
 ```
 
 ## 1. Sasaran MVP

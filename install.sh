@@ -140,12 +140,49 @@ setup_directory() {
         chmod 755 "$dir"
     fi
 
-    # Jika ini adalah direktori frontend, lakukan npm install dan npm run build
+    # Proses khusus Frontend (Yarn / npm)
     if [[ "$is_frontend" == "true" && -d "$dir" ]]; then
-        log "Menjalankan npm install & build untuk Frontend..."
         cd "$dir"
-        npm install
-        npm run build
+        if [[ -f "yarn.lock" ]]; then
+            if ! command -v yarn &> /dev/null; then
+                log "Menginstal Yarn secara global..."
+                npm install -g yarn
+            fi
+            log "Menjalankan yarn install & yarn build untuk Frontend..."
+            yarn install
+            yarn build
+        else
+            log "Menjalankan npm install & npm run build untuk Frontend..."
+            npm install
+            npm run build
+        fi
+        cd - > /dev/null
+    fi
+
+    # Proses khusus Backend (Python venv & pip requirements.txt)
+    if [[ "$is_frontend" == "false" && -d "$dir" ]]; then
+        log "Menyiapkan Python Virtual Environment untuk Backend..."
+        
+        # Pastikan python3-pip dan python3-venv terinstal
+        if ! dpkg -l | grep -q python3-venv || ! command -v pip3 &> /dev/null; then
+            log "Menginstal python3-pip dan python3-venv..."
+            apt install -y python3-pip python3-venv
+        fi
+
+        cd "$dir"
+        # Buat venv jika belum ada
+        if [[ ! -d "venv" ]]; then
+            python3 -m venv venv
+        fi
+
+        # Instal requirements.txt di dalam venv
+        if [[ -f "requirements.txt" ]]; then
+            log "Menginstal dependensi Python dari requirements.txt..."
+            ./venv/bin/pip install --upgrade pip
+            ./venv/bin/pip install -r requirements.txt
+        else
+            log "Peringatan: File requirements.txt tidak ditemukan di direktori backend!"
+        fi
         cd - > /dev/null
     fi
 }

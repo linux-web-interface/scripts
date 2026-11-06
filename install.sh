@@ -14,6 +14,17 @@ err() { printf '[ERROR] %s\n' "$*" >&2; exit 1; }
 
 [[ "$EUID" -eq 0 ]] || err "Jalankan skrip ini dengan sudo: sudo $0"
 
+# Flag untuk melacak apakah apt update sudah pernah dijalankan
+APT_UPDATED=0
+
+run_apt_update_once() {
+    if [ "$APT_UPDATED" -eq 0 ]; then
+        log "Memperbarui repositori sistem (apt update)..."
+        apt update
+        APT_UPDATED=1
+    fi
+}
+
 # 0. Pengaturan Hostname & Pemilihan Network Interface untuk Avahi/mDNS
 log "=== PENGATURAN HOSTNAME & JARINGAN mDNS ==="
 CURRENT_HOSTNAME=$(hostname)
@@ -51,16 +62,23 @@ else
   log "Interface yang dipilih untuk Avahi: $SELECTED_IFACE"
 fi
 
-# Install Avahi Daemon jika belum ada
+# Cek & Install Avahi Daemon jika belum ada
 if ! dpkg -l | grep -q avahi-daemon; then
+  run_apt_update_once
   log "Menginstal avahi-daemon..."
-  apt update && apt install -y avahi-daemon
+  apt install -y avahi-daemon
 fi
-# Instalasi Paket Utama (Avahi, Apache, Node.js, npm)
-log "Memperbarui repositori dan menginstal paket yang diperlukan..."
-apt update && apt install -y nodejs npm
 
-# Instal PM2 secara global
+# Cek & Install Node.js / npm
+if command -v node &> /dev/null && command -v npm &> /dev/null; then
+    log "Node.js (versi $(node -v)) dan npm sudah terinstal."
+else
+    run_apt_update_once
+    log "Menginstal Node.js dan npm..."
+    apt install -y nodejs npm
+fi
+
+# Cek & Install PM2 secara global
 if ! command -v pm2 &> /dev/null; then
   log "Menginstal PM2 process manager..."
   npm install -g pm2
@@ -84,10 +102,11 @@ fi
 # 1. Cek & Setup Direktori Frontend & Backend
 log "Memeriksa direktori proyek..."
 
-# Pastikan git terinstal
+# Cek & Install Git jika belum ada
 if ! command -v git &> /dev/null; then
+  run_apt_update_once
   log "Menginstal git..."
-  apt update && apt install -y git
+  apt install -y git
 fi
 
 setup_directory() {

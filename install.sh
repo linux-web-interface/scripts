@@ -84,29 +84,38 @@ fi
 # 1. Cek & Setup Direktori Frontend & Backend
 log "Memeriksa direktori proyek..."
 
+# Pastikan git terinstal
+if ! command -v git &> /dev/null; then
+  log "Menginstal git..."
+  apt update && apt install -y git
+fi
+
 setup_directory() {
     local dir="$1"
     local name="$2"
+    local repo_url="$3"
     
     if [[ -d "$dir" ]]; then
         log "Direktori $name ($dir) sudah ada."
         read -rp "Apakah Anda ingin memperbarui/menimpa isinya? (y/N): " choice
         if [[ "$choice" =~ ^[Yy]$ ]]; then
-            log "Memperbarui direktori $name..."
-            mkdir -p "$dir"
+            log "Membersihkan dan melakukan clone ulang untuk $name dari $repo_url..."
+            rm -rf "$dir"
+            git clone "$repo_url" "$dir"
         else
             log "Melewati pembaruan untuk $name."
         fi
     else
-        log "Direktori $name belum ada. Membuat direktori baru..."
-        mkdir -p "$dir"
+        log "Direktori $name belum ada. Melakukan clone repository..."
+        git clone "$repo_url" "$dir"
         chown -R root:root "$dir"
         chmod 755 "$dir"
     fi
 }
 
-setup_directory "$FE_DIR" "Frontend (lwi-fe)"
-setup_directory "$BE_DIR" "Backend (lwi-be)"
+# Panggil fungsi dengan menyertakan URL Repository masing-masing
+setup_directory "$FE_DIR" "Frontend (lwi-fe)" "https://github.com/linux-web-interface/frontend.git"
+setup_directory "$BE_DIR" "Backend (lwi-be)" "https://github.com/linux-web-interface/backend.git"
 
 # 2. Eksekusi Check Network (mengambil dari folder scripts/)
 log "Menjalankan pemeriksaan jaringan (Check Network)..."

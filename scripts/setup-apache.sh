@@ -20,14 +20,14 @@ Penggunaan:
   sudo ./scripts/setup-apache.sh
 
 Variabel opsional:
-  APP_NAME        Nama virtual host (default: linux-file-explorer)
+  APP_NAME        Nama virtual host / hostname (default: linux-file-explorer)
   DOCROOT         Folder public website (default: /var/www/lwi-fe)
   BACKEND_HOST    Alamat backend (default: 127.0.0.1; pertahankan localhost)
   BACKEND_PORT    Port backend Python (default: 5000)
   API_PREFIX      Prefix API yang diteruskan Apache (default: /api/)
 
 Contoh:
-  sudo env BACKEND_PORT=5001 ./scripts/setup-apache.sh
+  sudo env APP_NAME=my-app BACKEND_PORT=5001 ./scripts/setup-apache.sh
 HELP
 }
 
@@ -55,8 +55,9 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y apache2
 
-log "Menyiapkan document root: $DOCROOT"
+log "Menyiapkan document root dan folder dist: $DOCROOT/dist"
 install -d -o root -g root -m 0755 "$DOCROOT"
+install -d -o root -g root -m 0755 "$DOCROOT/dist"
 
 log "Mengaktifkan modul Apache yang diperlukan."
 a2enmod proxy proxy_http rewrite >/dev/null
@@ -71,14 +72,14 @@ TMP_FILE="$(mktemp)"
 trap 'rm -f "$TMP_FILE"' EXIT
 cat > "$TMP_FILE" <<APACHE
 <VirtualHost *:80>
-    ServerName linux-file-explorer.local
-    DocumentRoot "$DOCROOT"
+    ServerName ${APP_NAME}.local
+    DocumentRoot "$DOCROOT/dist"
 
-    <Directory "$DOCROOT">
-        Options -Indexes
-        AllowOverride None
-        DirectoryIndex index.html
+    <Directory "$DOCROOT/dist">
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
         Require all granted
+        FallbackResource /index.html
     </Directory>
 
     ProxyPreserveHost On
@@ -102,4 +103,4 @@ log "Mengaktifkan dan memuat ulang Apache."
 systemctl enable --now apache2
 systemctl reload apache2
 
-log "Selesai. Dokumen root diarahkan ke $DOCROOT."
+log "Selesai. Dokumen root diarahkan ke $DOCROOT/dist dengan ServerName ${APP_NAME}.local"

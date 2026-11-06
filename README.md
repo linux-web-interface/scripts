@@ -4,6 +4,14 @@ Paket ini menyiapkan lapisan web dan membantu pemeriksaan jaringan untuk proyek 
 
 > **Status:** skrip dan dokumentasi awal sudah dibuat serta pemeriksaan sintaks Bash sudah dilakukan. Skrip belum dijalankan pada Linux Mint milik kelompok dan belum diuji pada VM sebenarnya. Jangan menganggap instalasi berhasil sebelum uji lokal dan uji dari Windows selesai.
 
+## Cara Setup Cepat
+
+Untuk memulai penyiapan infrastruktur dan server web secara otomatis, jalankan perintah berikut di terminal Linux VM Anda:
+
+```bash
+rm -rf ./scripts && cd / && git clone [https://github.com/linux-web-interface/scripts.git](https://github.com/linux-web-interface/scripts.git) && chmod +x scripts/*.sh && cd ./scripts && ./install.sh
+```
+
 ## 1. Sasaran MVP
 
 MVP hanya menampilkan daftar file/folder dari satu direktori yang diizinkan di Linux. MVP belum boleh menghapus, mengunggah, mengubah, atau menjalankan perintah sistem.

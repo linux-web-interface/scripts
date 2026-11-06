@@ -5,7 +5,7 @@
 set -Eeuo pipefail
 
 APP_NAME="${APP_NAME:-linux-file-explorer}"
-DOCROOT="${DOCROOT:-/var/www/${APP_NAME}/public}"
+DOCROOT="${DOCROOT:-/var/www/lwi-fe}"
 BACKEND_HOST="${BACKEND_HOST:-127.0.0.1}"
 BACKEND_PORT="${BACKEND_PORT:-5000}"
 API_PREFIX="${API_PREFIX:-/api/}"
@@ -20,11 +20,11 @@ Penggunaan:
   sudo ./scripts/setup-apache.sh
 
 Variabel opsional:
-  APP_NAME       Nama virtual host (default: linux-file-explorer)
-  DOCROOT        Folder public website (default: /var/www/<APP_NAME>/public)
-  BACKEND_HOST   Alamat backend (default: 127.0.0.1; pertahankan localhost)
-  BACKEND_PORT   Port backend Python (default: 5000)
-  API_PREFIX     Prefix API yang diteruskan Apache (default: /api/)
+  APP_NAME        Nama virtual host (default: linux-file-explorer)
+  DOCROOT         Folder public website (default: /var/www/lwi-fe)
+  BACKEND_HOST    Alamat backend (default: 127.0.0.1; pertahankan localhost)
+  BACKEND_PORT    Port backend Python (default: 5000)
+  API_PREFIX      Prefix API yang diteruskan Apache (default: /api/)
 
 Contoh:
   sudo env BACKEND_PORT=5001 ./scripts/setup-apache.sh
@@ -57,16 +57,6 @@ apt-get install -y apache2
 
 log "Menyiapkan document root: $DOCROOT"
 install -d -o root -g root -m 0755 "$DOCROOT"
-
-# Put a small landing page only when the directory has no existing entry point.
-# This prevents overwriting the frontend team's existing files.
-if [[ ! -e "$DOCROOT/index.html" && ! -e "$DOCROOT/index.php" ]]; then
-  SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  REPO_DIR="$(dirname -- "$SCRIPT_DIR")"
-  DEMO_PAGE="$REPO_DIR/scripts/index.html"
-  [[ -f "$DEMO_PAGE" ]] || die "Demo page tidak ditemukan: $DEMO_PAGE"
-  install -o root -g root -m 0644 "$DEMO_PAGE" "$DOCROOT/index.html"
-fi
 
 log "Mengaktifkan modul Apache yang diperlukan."
 a2enmod proxy proxy_http rewrite >/dev/null
@@ -112,6 +102,4 @@ log "Mengaktifkan dan memuat ulang Apache."
 systemctl enable --now apache2
 systemctl reload apache2
 
-log "Selesai. Uji dari Linux dengan: curl -I http://127.0.0.1/"
-log "Untuk guest VM dengan NAT port-forwarding, alamat browser Windows nantinya: http://127.0.0.1:8080/"
-log "Log Apache: /var/log/apache2/${APP_NAME}-access.log dan ${APP_NAME}-error.log"
+log "Selesai. Dokumen root diarahkan ke $DOCROOT."

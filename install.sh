@@ -75,6 +75,7 @@ if command -v node &> /dev/null && command -v npm &> /dev/null; then
 else
     run_apt_update_once
     log "Menginstal Node.js dan npm..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
     apt install -y nodejs npm
 fi
 

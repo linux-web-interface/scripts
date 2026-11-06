@@ -25,6 +25,13 @@ run_apt_update_once() {
     fi
 }
 
+# Cek & Install curl jika belum ada
+if ! command -v curl &> /dev/null; then
+    run_apt_update_once
+    log "Menginstal curl..."
+    apt install -y curl
+fi
+
 # 0. Pengaturan Hostname & Pemilihan Network Interface untuk Avahi/mDNS
 log "=== PENGATURAN HOSTNAME & JARINGAN mDNS ==="
 CURRENT_HOSTNAME=$(hostname)

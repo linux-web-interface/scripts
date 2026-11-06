@@ -63,7 +63,7 @@ install -d -o root -g root -m 0755 "$DOCROOT"
 if [[ ! -e "$DOCROOT/index.html" && ! -e "$DOCROOT/index.php" ]]; then
   SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
   REPO_DIR="$(dirname -- "$SCRIPT_DIR")"
-  DEMO_PAGE="$REPO_DIR/web-demo/index.html"
+  DEMO_PAGE="$REPO_DIR/scripts/index.html"
   [[ -f "$DEMO_PAGE" ]] || die "Demo page tidak ditemukan: $DEMO_PAGE"
   install -o root -g root -m 0644 "$DEMO_PAGE" "$DOCROOT/index.html"
 fi

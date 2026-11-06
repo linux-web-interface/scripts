@@ -69,6 +69,31 @@ else
   log "Interface yang dipilih untuk Avahi: $SELECTED_IFACE"
 fi
 
+# Konfigurasi IP Statis ke /etc/network/interfaces
+NETWORK_INTERFACES_FILE="/etc/network/interfaces"
+
+if [[ -f "$NETWORK_INTERFACES_FILE" ]]; then
+    log "Menambahkan konfigurasi IP statis untuk $SELECTED_IFACE..."
+    
+    # Cek apakah interface sudah ada di dalam file, jika belum tambahkan blok konfigurasinya
+    if ! grep -q "iface $SELECTED_IFACE" "$NETWORK_INTERFACES_FILE"; then
+        cat <<'EOF' >> "$NETWORK_INTERFACES_FILE"
+
+# Konfigurasi IP Statis otomatis oleh LWI Installer
+auto $SELECTED_IFACE
+iface $SELECTED_IFACE inet static
+address 192.168.1.1
+netmask 255.255.255.0
+EOF
+        log "Berhasil menambahkan konfigurasi statis untuk $SELECTED_IFACE."
+    else
+        log "Konfigurasi untuk interface $SELECTED_IFACE sudah ada di file interfaces."
+    fi
+    
+    # Restart layanan jaringan agar konfigurasi diterapkan
+    systemctl restart networking || true
+fi
+
 # Cek & Install Avahi Daemon jika belum ada
 if ! dpkg -l | grep -q avahi-daemon; then
   run_apt_update_once

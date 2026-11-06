@@ -14,6 +14,62 @@ err() { printf '[ERROR] %s\n' "$*" >&2; exit 1; }
 
 [[ "$EUID" -eq 0 ]] || err "Jalankan skrip ini dengan sudo: sudo $0"
 
+# 0. Pengaturan Hostname & Pemilihan Network Interface untuk Avahi/mDNS
+log "=== PENGATURAN HOSTNAME & JARINGAN mDNS ==="
+CURRENT_HOSTNAME=$(hostname)
+echo "Hostname saat ini: $CURRENT_HOSTNAME"
+read -p "Masukkan hostname baru (tekan Enter untuk tetap '$CURRENT_HOSTNAME'): " NEW_HOSTNAME
+
+if [ -z "$NEW_HOSTNAME" ]; then
+  NEW_HOSTNAME=$CURRENT_HOSTNAME
+fi
+
+log "Mengubah hostname ke: $NEW_HOSTNAME"
+hostnamectl set-hostname "$NEW_HOSTNAME"
+sed -i "s/127.0.1.1.*/127.0.1.1\t$NEW_HOSTNAME/" /etc/hosts 2>/dev/null || echo -e "127.0.0.1\tlocalhost $NEW_HOSTNAME" >> /etc/hosts
+
+echo ""
+log "Daftar Network Interface yang Tersedia:"
+INTERFACES=($(ip -o link show | awk -F': ' '{print $2}' | grep -v "lo"))
+
+i=1
+for iface in "${INTERFACES[@]}"; do
+  IP_ADDR=$(ip -4 addr show dev "$iface" 2>/dev/null | grep inet | awk '{print $2}' | cut -d'/' -f1)
+  [ -z "$IP_ADDR" ] && IP_ADDR="Tidak ada IP"
+  
+  echo "$i) Interface: $iface (IP: $IP_ADDR)"
+  ((i++))
+done
+
+read -p "Pilih nomor interface yang ingin digunakan untuk mDNS/Avahi: " CHOICE
+SELECTED_IFACE="${INTERFACES[$((CHOICE-1))]}"
+
+if [ -z "$SELECTED_IFACE" ]; then
+  log "Pilihan tidak valid. Menggunakan default 'ens34'."
+  SELECTED_IFACE="ens34"
+else
+  log "Interface yang dipilih untuk Avahi: $SELECTED_IFACE"
+fi
+
+# Install Avahi Daemon jika belum ada
+if ! dpkg -l | grep -q avahi-daemon; then
+  log "Menginstal avahi-daemon..."
+  apt update && apt install -y avahi-daemon
+fi
+
+# Konfigurasi Avahi agar mendengarkan interface terpilih
+CONFIG_FILE="/etc/avahi/avahi-daemon.conf"
+if [[ -f "$CONFIG_FILE" ]]; then
+  if grep -q "^#allow-interfaces=" "$CONFIG_FILE"; then
+    sed -i "s/^#allow-interfaces=.*/allow-interfaces=$SELECTED_IFACE/" "$CONFIG_FILE"
+  elif grep -q "^allow-interfaces=" "$CONFIG_FILE"; then
+    sed -i "s/^allow-interfaces=.*/allow-interfaces=$SELECTED_IFACE/" "$CONFIG_FILE"
+  else
+    sed -i "/\[server\]/a allow-interfaces=$SELECTED_IFACE" "$CONFIG_FILE"
+  fi
+  systemctl restart avahi-daemon
+fi
+
 # 1. Cek & Setup Direktori Frontend & Backend
 log "Memeriksa direktori proyek..."
 
@@ -64,30 +120,10 @@ else
     fi
 fi
 
-# 4. Pilihan Hypervisor (VirtualBox atau VMware)
-echo ""
-echo "=== PILIHAN HYPERVISOR UNTUK PORT FORWARDING ==="
-echo "1. VirtualBox"
-echo "2. VMware"
-echo "3. Lewati"
-read -rp "Pilih hypervisor yang Anda gunakan (1/2/3): " hypervisor_choice
+# 4. Pengaturan Firewall (UFW) untuk akses web
+log "Mengonfigurasi UFW firewall..."
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw --force enable
 
-case "$hypervisor_choice" in
-    1)
-        echo ""
-        echo "Untuk VirtualBox, jalankan file PowerShell berikut di Windows HOST (pastikan VM dalam keadaan mati/powered off):"
-        echo "  .\\scripts\\setup-virtualbox-nat.ps1 -VMName \"Nama_VM_Anda\" -HostPort 8080 -GuestPort 80"
-        ;;
-    2)
-        echo ""
-        echo "=== KONFIGURASI PORT FORWARDING UNTUK VMWARE ==="
-        echo "Untuk VMware, gunakan skrip PowerShell yang tersedia di folder scripts."
-        echo "Jalankan perintah ini di Windows HOST (PowerShell as Administrator, pastikan VM mati):"
-        echo "  .\\scripts\\setup-vmware.ps1 -VMName \"Nama_VM_Anda\" -GuestIP \"IP_Guest_VM_Anda\" -HostPort 8080"
-        ;;
-    *)
-        log "Pilihan dilewati."
-        ;;
-esac
-
-log "Instalasi dan pengecekan selesai!"
+log "Instalasi selesai! Silakan akses dari browser Windows melalui: http://$NEW_HOSTNAME.local"

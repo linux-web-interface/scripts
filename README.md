@@ -12,6 +12,20 @@ Untuk memulai penyiapan infrastruktur dan server web secara otomatis, jalankan p
 rm -rf /scripts && cd / && git clone https://github.com/linux-web-interface/scripts.git && chmod +x scripts/*.sh && chmod +x scripts/scripts/*.sh && cd ./scripts && ./install.sh
 ```
 
+## Cara Setup / Update Script
+
+Untuk memulai penyiapan infrastruktur dan server web secara otomatis, jalankan perintah berikut di terminal Linux VM Anda:
+
+```bash
+rm -rf /scripts && cd / && git clone https://github.com/linux-web-interface/scripts.git && chmod +x scripts/*.sh && chmod +x scripts/scripts/*.sh && cd ./scripts
+```
+
+Untuk menginstall aplikasi:
+
+```bash
+cd /scripts/install.sh
+```
+
 ## 1. Sasaran MVP
 
 MVP hanya menampilkan daftar file/folder dari satu direktori yang diizinkan di Linux. MVP belum boleh menghapus, mengunggah, mengubah, atau menjalankan perintah sistem.

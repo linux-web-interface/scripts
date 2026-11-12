@@ -4,6 +4,7 @@
 
 set -Eeuo pipefail
 
+
 FE_DIR="/var/www/lwi-fe"
 BE_DIR="/opt/lwi-be"
 APP_NAME="linux-file-explorer"

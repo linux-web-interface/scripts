@@ -11,63 +11,24 @@ Proyek ini dikembangkan untuk lingkungan Linux berbasis CLI (tanpa Desktop Envir
 Gambaran umum lingkungan sistem:
 
 ```text
-┌──────────────────────────────────────────────┐
-│              WINDOWS HOST                    │
-│                                              │
-│  OS       : Windows                          │
-│  Role     : Client                           │
-│  IP       : 192.168.1.2                      │
-│                                              │
-│  ┌────────────────────────────────────────┐  │
-│  │              Web Browser               │  │
-│  │                                        │  │
-│  │  http://192.168.1.1                    │  │
-│  │  http://linux-file-explorer.local      │  │
-│  └────────────────────┬───────────────────┘  │
-└───────────────────────┼──────────────────────┘
-                        │
-                        │ HTTP / TCP
-                        │ Host-only Network
-                        │ VMnet1 / VirtualBox
-                        │
-                        ▼
-┌──────────────────────────────────────────────┐
-│                LINUX VM                      │
-│                                              │
-│  OS       : Debian / Ubuntu-based Linux      │
-│  Role     : Web Server                       │
-│  IP       : 192.168.1.1                      │
-│  Hostname : linux-file-explorer.local        │
-│                                              │
-│  ┌────────────────────────────────────────┐  │
-│  │                 APACHE                 │  │
-│  │                                        │  │
-│  │  HTTP Port : 80                        │  │
-│  │  HTTPS     : 443 (if configured)       │  │
-│  │                                        │  │
-│  │  ┌──────────────────────────────────┐  │  │
-│  │  │    FRONTEND                      │  │  │
-│  │  │    React + Vite                  │  │  │
-│  │  │                                  │  │  │
-│  │  │  Static Files                    │  │  │
-│  │  │  /var/www/lwi-fe                 │  │  │
-│  │  └──────────────────────────────────┘  │  │
-│  │                                        │  │
-│  │  ┌──────────────────────────────────┐  │  │
-│  │  │    BACKEND                       │  │  │
-│  │  │    Python Flask                  │  │  │
-│  │  │                                  │  │  │
-│  │  │  API Port : 5000                 │  │  │
-│  │  │  Target   : 127.0.0.1:5000       │  │  │
-│  │  └──────────────────────────────────┘  │  │
-│  └────────────────────────────────────────┘  │
-│                                              │
-│  ┌────────────────┐  ┌────────────────────┐  │
-│  │      PM2       │  │       AVAHI        │  │
-│  │ Process        │  │ mDNS Service       │  │
-│  │ Management     │  │ .local hostname    │  │
-│  └────────────────┘  └────────────────────┘  │
-└──────────────────────────────────────────────┘
+Windows Host (Client)
+        |
+        | Browser
+        |
+   Host-only Network
+        |
+        v
+Linux VM (Server)
+        |
+        +-- Apache (Web Server)
+        |
+        +-- Frontend (React + Vite)
+        |
+        +-- Backend (Python + Flask)
+        |
+        +-- PM2 (Process Management)
+        |
+        +-- Avahi (mDNS)
 ```
 
 **Komponen utama:**

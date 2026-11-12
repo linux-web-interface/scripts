@@ -23,7 +23,7 @@ rm -rf /scripts && cd / && git clone https://github.com/linux-web-interface/scri
 Untuk menginstall aplikasi:
 
 ```bash
-cd /scripts/install.sh
+/scripts/install.sh
 ```
 
 ## 1. Sasaran MVP

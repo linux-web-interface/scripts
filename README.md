@@ -1,4 +1,4 @@
-# Linux File Explorer – Infrastructure Scripts
+# Linux Web Interface – Infrastructure Scripts
 
 Repository ini berisi kumpulan script untuk membantu proses instalasi, konfigurasi, dan pemeriksaan infrastruktur **Linux File Explorer**.
 

@@ -95,6 +95,65 @@ Pengaturan Host-only Network dapat dilakukan melalui:
 
 Jika Linux VM membutuhkan akses internet, adapter NAT dapat ditambahkan sebagai antarmuka jaringan tambahan. NAT bukan pengganti jaringan Host-only yang digunakan untuk komunikasi antara host dan guest.
 
+## Panduan Jaringan Tambahan untuk Hypervisor
+
+Bagian ini melengkapi pengaturan jaringan di atas untuk hypervisor yang digunakan selain VMware. Nama menu dapat sedikit berbeda bergantung pada versi aplikasi.
+
+**Catatan alamat IP:** alamat `192.168.1.1` dan `192.168.1.2` pada contoh sebelumnya bukan alamat wajib. Gunakan alamat yang berada dalam subnet jaringan virtual yang benar-benar dibuat oleh hypervisor. Pastikan alamat tersebut tidak bertabrakan dengan perangkat lain atau rentang DHCP.
+
+### Oracle VirtualBox
+
+Untuk menghubungkan host secara langsung ke Linux VM melalui jaringan privat:
+
+1. Buka **Tools → Network** atau **Network Manager** pada VirtualBox Manager.
+2. Pada bagian **Host-only Networks**, buat jaringan host-only baru apabila belum tersedia.
+3. Matikan VM, lalu buka **Settings → Network → Adapter 1**.
+4. Aktifkan **Enable Network Adapter** dan pilih **Host-only Adapter** atau **Host-only Network** pada bagian **Attached to**. Pilih nama jaringan host-only yang dibuat pada langkah sebelumnya.
+5. Di dalam Linux VM, gunakan DHCP apabila DHCP server pada jaringan host-only diaktifkan. Jika menggunakan IP statis, pilih alamat dalam subnet yang sama dan di luar rentang DHCP.
+6. Periksa alamat guest dari terminal Linux dengan `ip -br -4 address`, lalu akses alamat tersebut dari browser host, misalnya `http://ALAMAT-IP-LINUX-VM`.
+
+Jika Linux VM juga membutuhkan akses internet, aktifkan **Adapter 2** dan pilih **NAT**. Dalam susunan ini, Adapter 1 digunakan untuk komunikasi host-to-guest, sedangkan Adapter 2 menyediakan akses internet bagi guest. Pastikan konfigurasi route di guest tidak menyebabkan konflik.
+
+Dokumentasi resmi: [Oracle VirtualBox 7.2 – Virtual Networking](https://docs.oracle.com/en/virtualization/virtualbox/7.2/user/networkingdetails.html).
+
+### QEMU
+
+QEMU menyediakan beberapa backend jaringan. Untuk percobaan awal yang hanya memerlukan browser pada komputer host untuk membuka Apache di guest, cara paling sederhana adalah **User-mode networking dengan port forwarding**.
+
+Tambahkan opsi berikut ke perintah yang digunakan untuk menjalankan QEMU:
+
+```bash
+-nic user,hostfwd=tcp:127.0.0.1:8080-:80
+```
+
+Konfigurasi tersebut meneruskan koneksi TCP pada `127.0.0.1:8080` di host ke port TCP `80` di Linux guest. Dengan asumsi Apache berjalan dan mendengarkan pada port `80`, buka alamat berikut pada browser komputer host:
+
+```text
+http://127.0.0.1:8080
+```
+
+Keterangan:
+
+- Port `8080` adalah port pada host; port tersebut harus belum digunakan oleh aplikasi lain.
+- Port `80` adalah port Apache di guest. Sesuaikan bagian ini apabila Apache menggunakan port yang berbeda.
+- QEMU User-mode networking menyediakan konfigurasi jaringan guest melalui mekanisme internal QEMU; metode ini tidak memerlukan alamat IP Host-only statis seperti contoh pada bagian sebelumnya.
+- Pengikatan ke `127.0.0.1` membatasi akses melalui komputer host itu sendiri. Perangkat lain di LAN tidak dapat menggunakan alamat loopback host tersebut untuk mengakses aplikasi.
+
+Apabila proyek membutuhkan guest menjadi perangkat pada jaringan host atau membutuhkan jaringan privat bergaya Host-only, QEMU dapat menggunakan backend **TAP** yang dihubungkan ke interface/bridge pada host. Konfigurasinya lebih bergantung pada sistem operasi host dan hak akses jaringan. Pada Windows, QEMU memerlukan driver TAP yang sesuai dan tidak menyertakannya sebagai bagian dari QEMU standar; pada Linux, host perlu mendukung interface TAP melalui `/dev/net/tun`. Karena itu, gunakan TAP sebagai konfigurasi lanjutan setelah kebutuhan jaringan dan sistem operasi host ditentukan.
+
+Dokumentasi resmi: [QEMU – Network emulation](https://www.qemu.org/docs/master/system/devices/net.html) dan [QEMU – System invocation (`hostfwd`)](https://www.qemu.org/docs/master/system/qemu-manpage.html).
+
+### Memilih mode jaringan
+
+| Mode | Cara host mengakses web guest | Kegunaan |
+|---|---|---|
+| Host-only | Melalui alamat IP guest pada jaringan virtual | Komunikasi privat langsung antara host dan guest |
+| NAT + port forwarding | Melalui alamat host dan port yang diteruskan, misalnya `127.0.0.1:8080` | Akses layanan guest dari host tanpa mengekspos guest langsung ke LAN |
+| Bridged | Melalui alamat IP guest pada jaringan LAN | Saat guest perlu tampak sebagai perangkat tersendiri di jaringan lokal |
+| QEMU TAP/bridge | Melalui alamat IP guest pada jaringan yang dihubungkan ke TAP/bridge | Kebutuhan jaringan QEMU yang lebih lanjut; perlu konfigurasi pada host |
+
+Pilih satu metode berdasarkan kebutuhan pengujian dan samakan metode tersebut dengan konfigurasi pada script. Jangan mengasumsikan bahwa alamat IP guest atau cara akses dari browser sama untuk Host-only, NAT port forwarding, dan Bridged.
+
 ## Supported Environments
 
 Repository ini dapat digunakan pada beberapa lingkungan:

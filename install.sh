@@ -2,18 +2,63 @@
 # Script Installer untuk Linux Web Interface (LWI)
 # Dijalankan di Linux Guest (Debian/Ubuntu/Linux Mint) dengan hak akses sudo dari root folder.
 
+
 set -Eeuo pipefail
 
-
+# VAR
 FE_DIR="/var/www/lwi-fe"
 BE_DIR="/opt/lwi-be"
 APP_NAME="linux-file-explorer"
 SITE_FILE="/etc/apache2/sites-available/000-000-${APP_NAME}.conf"
 
+DATA_DIR="/var/lib/linux-web-interface"
+DATA_FILE="$DATA_DIR/desktop.json"
+
 log() { printf '[INFO] %s\n' "$*"; }
 err() { printf '[ERROR] %s\n' "$*" >&2; exit 1; }
 
+setup_data_directory() {
+    log "Menyiapkan direktori data aplikasi..."
+
+    # Deteksi user yang menjalankan installer
+    local APP_USER="${SUDO_USER:-root}"
+    local APP_GROUP
+
+    if [[ "$APP_USER" == "root" ]]; then
+        APP_GROUP="root"
+    else
+        APP_GROUP=$(id -gn "$APP_USER")
+    fi
+
+    # Buat direktori data
+    mkdir -p "$DATA_DIR"
+
+    # Atur kepemilikan berdasarkan user installer
+    chown -R "$APP_USER:$APP_GROUP" "$DATA_DIR"
+
+    # User pemilik dapat membaca dan menulis
+    # Group hanya dapat membaca
+    chmod 750 "$DATA_DIR"
+
+    # Buat desktop.json jika belum tersedia
+    if [[ ! -f "$DATA_FILE" ]]; then
+        cat <<'EOF' > "$DATA_FILE"
+{
+    "items": []
+}
+EOF
+        chown "$APP_USER:$APP_GROUP" "$DATA_FILE"
+        chmod 640 "$DATA_FILE"
+    fi
+
+    log "Direktori data berhasil disiapkan."
+    log "Lokasi: $DATA_DIR"
+    log "Pemilik: $APP_USER:$APP_GROUP"
+}
+
 [[ "$EUID" -eq 0 ]] || err "Jalankan skrip ini dengan sudo: sudo $0"
+
+setup_data_directory
 
 # Flag untuk melacak apakah apt update sudah pernah dijalankan
 APT_UPDATED=0

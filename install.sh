@@ -123,7 +123,7 @@ if [[ -f "$NETWORK_INTERFACES_FILE" ]]; then
     
     # Cek apakah interface sudah ada di dalam file, jika belum tambahkan blok konfigurasinya
     if ! grep -q "iface $SELECTED_IFACE" "$NETWORK_INTERFACES_FILE"; then
-        cat <<'EOF' >> "$NETWORK_INTERFACES_FILE"
+        cat <<EOF >> "$NETWORK_INTERFACES_FILE"
 
 # Konfigurasi IP Statis otomatis oleh LWI Installer
 auto $SELECTED_IFACE

@@ -42,7 +42,7 @@ setup_data_directory() {
 
     # Buat desktop.json jika belum tersedia
     if [[ ! -f "$DATA_FILE" ]]; then
-        cat <<'EOF' > "$DATA_FILE"
+        cat <<EOF > "$DATA_FILE"
 {
     "items": []
 }
